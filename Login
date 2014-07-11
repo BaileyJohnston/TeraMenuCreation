@@ -1,0 +1,159 @@
+//Bailey Johnston
+// Project 1
+// 7/26/13
+
+// Login Page - contains fields for new user entry and existing users.
+// 2 buttons lead to 2 separate pages - Billing Info or Existing User
+// Utilizing MySQL Database Application
+
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using MySql.Data.MySqlClient;
+
+
+namespace Project_1___Character_Selection
+{
+    public partial class Login : Form
+    {
+        public static MySqlConnection conn;
+
+        private static string server;
+        private static string database;
+        private static string uid;
+        private static string password;
+
+        // constructor
+        public Login(MySqlConnection conn) 
+        {
+            InitializeComponent();
+        }
+
+        // Pass values by reference to ExistingUser Tab
+        public void DoSomething(ref double ID)
+        {
+            ExistingUser box = new ExistingUser(ref ID);
+            box.Show();
+        }
+
+        // Pass values by reference to BillingInfo tab
+        public void BillingInfo(ref double ID)
+        {
+            BillingInfo tab = new BillingInfo(ref ID);
+            tab.Show();
+        }
+        
+        // Puplic variables
+        public string id;
+        public string username;
+        public double ID;
+
+        /// PATH TO EXISTING USER WINDOW ///   
+        public void ButtonLogin_Click(object sender, EventArgs e)
+        {
+            username = BoxUsername.Text;
+
+            // Connection to DB opened
+            server = "localhost";
+            database = "cs";
+            uid = "root";
+            password = "root";
+
+            string connectionString;
+            connectionString = "SERVER=" + server + ";" + "DATABASE=" +
+            database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";";
+
+            conn = new MySqlConnection(connectionString);
+            conn.Open();
+
+            // select username and retrieve ID number to pass as variable to ExistingUsers Tab
+            MySqlCommand cmd1 = new MySqlCommand("SELECT DISTINCT * FROM user_information WHERE user_username='" + username + "'", conn);
+            MySqlDataReader reader = cmd1.ExecuteReader();
+
+            while (reader.Read())
+            {
+                id = reader.GetString("user_id");
+            }
+
+            if (id != null)
+            {
+                ID = Convert.ToDouble(id);
+                DoSomething(ref ID);
+            }
+            conn.Close();
+        }
+
+
+        /// PATH TO NEW USER FORM AFTER THEY INPUT INFORMATION ///
+        public void ButtonCreate_Click(object sender, EventArgs e)
+        {
+            // local variables
+            string fName;
+            string lName;
+            string MI;
+
+            fName = BoxFName.Text;
+            lName = BoxLName.Text;
+            MI = BoxMI.Text;
+
+            // public variable assigned
+            username = BoxEmail2.Text;
+
+            // Connect to DB
+            server = "localhost";
+            database = "cs";
+            uid = "root";
+            password = "root";
+
+            string connectionString;
+            connectionString = "SERVER=" + server + ";" + "DATABASE=" +
+            database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";";
+
+            conn = new MySqlConnection(connectionString);
+            conn.Open();
+
+            // Write into DB and update DB system
+            string sql = "INSERT INTO user_information(user_first_name, user_last_name, user_middle_initial, user_username) VALUES (@user_first_name,@user_last_name, @user_middle_initial, @user_username)";
+            MySqlCommand cmd1 = new MySqlCommand(sql, conn);
+
+            cmd1.Parameters.AddWithValue("@user_first_name", fName);
+            cmd1.Parameters.AddWithValue("@user_last_name", lName);
+            cmd1.Parameters.AddWithValue("@user_middle_initial", MI);
+            cmd1.Parameters.AddWithValue("@user_username", username);
+            cmd1.ExecuteNonQuery();
+
+            MySqlCommand cmd = new MySqlCommand("SELECT * FROM user_information WHERE user_username='" + username + "'", conn);
+            MySqlDataReader reader = cmd.ExecuteReader();
+
+
+            // Pull ID from DB and transer to Billing Info Tab
+            while (reader.Read())
+            {
+
+                id = reader.GetString("user_id");
+                ID = Convert.ToDouble(id);
+
+            }     
+            BillingInfo(ref ID);
+            this.Close();
+        }
+
+        // Exit Tab
+        private void Exit_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void Login_Load(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
+
